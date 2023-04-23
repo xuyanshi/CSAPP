@@ -1,0 +1,14 @@
+{
+    "duration": 100000000,
+    "provision": 1.0,
+    "minimal task duration": 100,
+    "maximal task duration": 10000000,
+    "turnarround amplification low": 2.0,
+    "turnarround amplification high": 5.0,
+    "turnarround amplification variance low": 0.2,
+    "turnarround amplification variance high": 0.5,
+    "minimal dominance": 0.6,
+    "maximal dominance": 1,
+    "io slice duration low": 10,
+    "io slice duration high": 50
+}

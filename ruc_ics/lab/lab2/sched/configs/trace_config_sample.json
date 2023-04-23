@@ -1,0 +1,35 @@
+{
+    "duration": 1000000,
+    "provision": 0.5,
+    "priority_proneness": 0.7,
+    "short_task": {
+        "duration_min": 100,
+        "duration_max": 1000,
+        "budget_tight": 5,
+        "budget_loose": 8,
+        "io_total_long": 0.7,
+        "io_total_short": 0.7,
+        "io_slice_long": 0.7,
+        "io_slice_short": 0.7
+    },
+    "regular_task": {
+        "duration_min": 1000,
+        "duration_max": 10000,
+        "budget_tight": 4,
+        "budget_loose": 6,
+        "io_total_long": 0.6,
+        "io_total_short": 0.1,
+        "io_slice_long": 0.05,
+        "io_slice_short": 0.01
+    },
+    "long_task": {
+        "duration_min": 10000,
+        "duration_max": 100000,
+        "budget_tight": 3,
+        "budget_loose": 5,
+        "io_total_long": 0.6,
+        "io_total_short": 0.01,
+        "io_slice_long": 0.04,
+        "io_slice_short": 0.001
+    }
+}
