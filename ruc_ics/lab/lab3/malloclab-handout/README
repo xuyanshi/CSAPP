@@ -1,0 +1,97 @@
+#####################################################################
+# CS:APP Malloc Lab
+# Handout files for students
+#
+# Copyright (c) 2002, R. Bryant and D. O'Hallaron, All rights reserved.
+# May not be used, modified, or copied without permission.
+#
+######################################################################
+
+***********
+Main Files:
+***********
+
+mm.{c,h}	
+	Your solution malloc package. mm.c is the file that you
+	will be handing in, and is the only file you should modify.
+
+mdriver.c	
+	The malloc driver that tests your mm.c file
+
+short{1,2}-bal.rep
+	Two tiny tracefiles to help you get started. 
+
+Makefile	
+	Builds the driver
+
+**********************************
+Other support files for the driver
+**********************************
+
+config.h	Configures the malloc lab driver
+fsecs.{c,h}	Wrapper function for the different timer packages
+clock.{c,h}	Routines for accessing the Pentium and Alpha cycle counters
+fcyc.{c,h}	Timer functions based on cycle counters
+ftimer.{c,h}	Timer functions based on interval timers and gettimeofday()
+memlib.{c,h}	Models the heap and sbrk function
+
+*******************************
+Building and running the driver
+*******************************
+To build the driver, type "make" to the shell.
+
+To run the driver on a tiny test trace:
+
+	unix> mdriver -V -f short1-bal.rep
+
+The -V option prints out helpful tracing and summary information.
+
+To get a list of the driver flags:
+
+	unix> mdriver -h
+
+####################
+# Example solutions. 
+####################
+
+For each solution, we give a brief description and (as a sanity check)
+its performance index on a gcc/Linux/Pentium III system.
+
+mm-naive.c	
+	The simplest solution.  Malloc simply sbrk's and writes
+	a size header. Free does nothing. Realloc is implemented
+	directly with malloc and free. This solution has great
+	throughput but terrible space utilization, and thus fails on
+	many traces because it exhausts memory. This is the solution
+	that is given to the students initially.
+
+	Perf index: None, because some of the traces fail when the
+	mm_malloc and mm_realloc run out of memory.
+
+mm-implicit.c	
+	Solution based on implicit free list. Simple implicit free
+	list w/boundary tag coaelescing. This is the simplest
+	"reasonable" package. It is described in detail in the CS:APP
+	book. Can be compiled to do either first fit or next fit.
+
+	Perf index (first fit) = 44 (util) + 1 (thru) = 45/100
+	Perf index (next fit) = 44 (util) + 1 (thru) = 44/100
+
+mm-explicit.c	
+	Solution based on explicit free list with boundary tag
+	coalescing and first fit placement. This is the simplest
+	sophisticated implementation. It gets near to full credit in
+	the CMU version of the course.
+
+	Perf index = 45 (util) + 40 (thru) = 85/100
+
+mm-tree.c	
+	Highly optimized solution based on red-black trees. We've
+	never seen a solution with a higher performance index
+	than this one.
+
+	Perf index = 57 (util) + 40 (thru) = 97/100
+
+mm-test.c	
+	A buggy malloc that produces overlapping blocks. Used for
+	testing the driver.

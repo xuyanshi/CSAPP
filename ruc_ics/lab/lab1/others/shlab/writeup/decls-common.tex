@@ -1,0 +1,155 @@
+%% Generic environments and commands that we use in the CS:APP book
+
+%%%%%%%%%% 
+% Commands
+%%%%%%%%%% 
+
+% For putting labels on pictures
+\newcommand{\clabel}[1]{\makebox(0,0){#1}}
+\newcommand{\rlabel}[1]{\makebox(0,0)[r]{#1}}
+\newcommand{\llabel}[1]{\makebox(0,0)[l]{#1}}
+\newcommand{\blabel}[1]{\makebox(0,0)[b]{#1}}
+\newcommand{\lblabel}[1]{\makebox(0,0)[lb]{#1}}
+\newcommand{\tlabel}[1]{\makebox(0,0)[t]{#1}}
+
+%% Comment command
+\newcommand{\comment}[1]{}
+
+%% Two part captions.  First part is title.  Second is explanation.
+\newcommand{\mycaption}[2]{\caption[#1]{{\bf #1} #2}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Environments and macros for different elements of the book
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+%% Various Unix command-line prompts
+\newcommand{\unixprompt}{unix>}
+\newcommand{\linuxprompt}{linux>}
+\newcommand{\solarisprompt}{solaris>}
+
+%% pcode- Generating pseudo-code
+\newenvironment{pcode}{\mbox{}\newline\vspace{.5ex}\newline\begin{minipage}{6in}\begin{tt}\begin{tabbing}MM\=MM\=MM\=MM\=MM\=MM\=MM\=MM\=MM\=\+\kill}{\end{tabbing}\end{tt}\end{minipage}\newline\vspace{.5ex}\newline}
+
+%% Showing syntactic elements in pseudo-code
+\newcommand{\syntax}[1]{{\rm\it #1}}
+
+%% aside - for displaying sidebars 
+\newenvironment{aside}[1]%
+{\begin{quote}\footnotesize{\bf Aside: #1\\}}
+{{\bf End Aside.}\end{quote}}
+
+%% ntc - New to C element
+\newenvironment{ntc}%
+{\begin{quote}\footnotesize{\bf New to C?}\\}
+{{\bf End}\end{quote}}
+
+%% ccode- for displaying formatted C code (c2tex) 
+\newenvironment{ccode}%
+{\small}%
+{}
+
+%% scode - for displaying formatted ASM code (s2tex and d2tex)
+\newenvironment{scode}%
+{\small}
+{}
+
+%% codefrag - for displaying unformatted code fragments
+\newenvironment{codefrag}%
+{\small\begin{alltt}}%
+{\end{alltt}%
+}
+
+%% tty - for displaying TTY input and output
+\newenvironment{tty}%
+{\small\begin{alltt}}%
+{\end{alltt}}
+
+
+%% Environment for descriptions that provide aligned text
+\newenvironment{mydesc}[1]{
+\setbox1=\hbox{#1}
+\begin{list}{}{
+\setlength{\labelwidth}{\wd1}
+\setlength{\leftmargin}{\wd1}
+  \addtolength{\leftmargin}{1em}
+  \addtolength{\leftmargin}{\labelsep}
+\setlength{\rightmargin}{1em}}}{\end{list}}
+
+\newcommand{\litem}[1]{\item[#1\hfill]}
+\newcommand{\ritem}[1]{\item[#1]}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Indexing 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Distinguish 5 types of index entries
+%%   - IA32 instructions (iindex, diindex)
+%%   - Program names (pindex, dpindex)
+%%   - C things (cindex, dcindex)
+%%   - Stdlib functions (sindex, dsindex)
+%%   - Unix functions (uindex, duindex)
+%%   - CSAPP functions (csindex, dcsindex)
+%%   - CSAPP programs (pcsindex, dpcsindex)
+%%   - Library files, such as <limits.h> (lindex, dlindex) 
+%%   - Everything else. (index, dindex)
+%% In every case, the `d' version is used for the definining index entry
+
+%% IA32 instructions.
+%% Takes two arguments:
+%% The name of the instruction
+%% An English rendition of the mnemonic
+\newcommand{\iindex}[2]{\index{#1@{\tt #1} [IA32] #2}}
+\newcommand{\diindex}[2]{\index{#1@{\tt #1} [IA32] #2|emph}}
+
+%% Program names (e.g., gcc, gdb.  Write in lower case)
+%% Takes two arguments:
+%% The name of the program
+%% An English description
+\newcommand{\pindex}[2]{\index{#1@{\sc #1} #2}}
+\newcommand{\dpindex}[2]{\index{#1@{\sc #1} #2|emph}}
+
+%% C things (operators, statements, etc)
+%% Takes two arguments:
+%% C name
+%% An English description
+\newcommand{\cindex}[2]{\index{#1@{\tt #1} [C] #2}}
+\newcommand{\dcindex}[2]{\index{#1@{\tt #1} [C] #2|emph}}
+
+%% Stdlib functions
+%% Takes two arguments:
+%% function name
+%% An English description
+\newcommand{\sindex}[2]{\index{#1@{\tt #1} [C Stdlib] #2}}
+\newcommand{\dsindex}[2]{\index{#1@{\tt #1} [C Stdlib] #2|emph}}
+
+%% Unix functions
+%% Takes two arguments:
+%% function name
+%% An English description
+\newcommand{\uindex}[2]{\index{#1@{\tt #1} [Unix] #2}}
+\newcommand{\duindex}[2]{\index{#1@{\tt #1} [Unix] #2|emph}}
+
+%% CSAPP functions
+%% Takes two arguments:
+%% function name
+%% An English description
+\newcommand{\csindex}[2]{\index{#1@{\tt #1} [CS:APP] #2}}
+\newcommand{\dcsindex}[2]{\index{#1@{\tt #1} [CS:APP] #2|emph}}
+
+%% CSAPP programs
+%% Takes two arguments:
+%% function name
+%% An English description
+\newcommand{\pcsindex}[2]{\index{#1@{\sc #1} [CS:APP] #2}}
+\newcommand{\dpcsindex}[2]{\index{#1@{\sc #1} [CS:APP] #2|emph}}
+
+%% Library file names (e.g., <limits.h>)
+%% Takes two arguments:
+%% The name of the file (without brackets)
+%% An English description
+\newcommand{\lindex}[2]{\index{#1@{\tt <#1>} #2}}
+\newcommand{\dlindex}[2]{\index{#1@{\tt <#1>} #2|emph}}
+
+%% Normal index entry.
+%% Takes one argument
+%% \index already defined
+\newcommand{\dindex}[1]{\index{#1|emph}}

@@ -1,0 +1,96 @@
+#####################################################################
+# CS:APP Shell Lab
+# Autograding Scripts
+#
+# Copyright (c) 2002, R. Bryant and D. O'Hallaron, All rights reserved.
+# May not be used, modified, or copied without permission.
+#
+######################################################################
+
+This directory contains autograding scripts for the CS:APP Shell Lab.
+
+********
+1. Files
+********
+
+config.pm
+	Config file for grade-handins.pl and grade-shlab.pl
+
+grade-shlab.pl
+	The Shell Lab's autograder. Runs the checktsh.pl script over 
+	all 16 tracefiles to grade a single tsh.c handin file and
+	emits a report on standard output.
+
+grade-handins.pl
+	A driver that invokes the autograder on every handin
+	file in the handin directory.
+
+checktsh.pl
+	Runs a shell (./tsh) over a set of traces and compares the output to
+	output of the the reference solution produced by ./tshref. Invoked
+	by grade-shlab.pl.
+
+handin/
+	The handin directory
+
+printdir.pl
+	A handy script that calls enscript on each file in a directory.
+
+######################################
+2. Configuring the autograding scripts
+######################################
+
+The config.pm file contains configuration info for the autograders. It
+defines a number of defaults that can be overridden on the autograder
+command lines. In general, you won't need to change anything in
+config.pm, unless you change the location of the driver source files
+or the location of the student handins, or you change the number of
+correctness, performance, or style points.
+
+*********************************************
+3. How to use the grade-shlab.pl autograder
+*********************************************
+
+Collect all of the student handin files in the ./handin directory. To
+grade a single handin file (say ./handin/ac00-tsh.c) type:
+
+	unix> ./grade-shlab.pl -f handin/ac00-tsh.c
+
+By default, this looks for the driver source code in ../src. You can
+override this with the -s <srcdir> option.  You can also use the -e
+flag to control whether you want the student's handin source file
+included in the grading sheet.
+
+If you have a small class, you can run grade-shlab.pl manually on
+each handin file. If you have a bigger class, you'll want to use the
+grade-handins.pl driver, which will invoke grade-shlab.pl on each
+handin file automatically.
+
+
+*****************************************
+4. How to use the grade-handins.pl driver
+*****************************************
+
+To grade all of the handin files in the ./handin directory, type:
+
+	unix> ./grade-handins.pl
+
+By default, this calls the grade-shlab.pl autograder for each handin
+file in directory ./handin, and redirects the resulting grade reports
+to files in the ./handin.grades directory. You can override these
+with the -s and -d command line options.
+
+Use the -e flag if you don't want the student's handin file included
+in the output grade sheet.
+
+You can expect that some handins will have problems, either because
+the students forgot to enter their team information, or their code
+won't compile, or their program dumps core. In these cases, the driver
+flags the problem, and goes on to the next handin file.
+
+You can print compact hardcopies of the grade reports using enscript:
+
+	unix> enscript -P<your printer> -2r ./handin.grades/*.out
+
+If you have two-sided printers and want to start each student's
+submission on a new page, you can use the handy printdir.pl script.

@@ -1,0 +1,47 @@
+#####################################################################
+# CS:APP Shell Lab
+#
+# Instructor's Source Files
+#
+# Copyright (c) 2002, R. Bryant and D. O'Hallaron, All rights reserved.
+# May not be used, modified, or copied without permission.
+#
+######################################################################
+
+sdriver.pl
+	Driver program that runs a student's shell program as a child, sends 
+	commands and signals to the child as directed by a trace file,
+	and captures and displays the output produced by the child.
+
+trace*.txt
+	Trace files that test different aspects of a shell implementation.
+	For example, does the shell recognize the quit command, can it
+	run a foreground job, does it handle ctrl-c and ctrl-z correctly.
+
+tsh.c
+	The reference solution
+
+tshref.out
+	Output of the reference solution for all of the traces.
+
+tsh-handout.c
+	Skeleton of tsh.c that is handed out to students. It is 
+	generated automatically from tsh.c by the elide.pl script.	
+
+elide.pl
+	Copies an input file to stdout, eliding anything between
+	a pairs of begin/end tag directives.
+
+myspin.c
+mysplit.c
+mystop.c
+myint.c
+	Little programs that the traces use to test the shell.
+	myspin <secs> sleeps for <secs> seconds, 1 second at
+	a time. mysplit.c forks a mysplin-like child. mystop.c
+	sleeps for several seconds and sends SIGTSTP to itself.
+	myint.c sleeps and sends SIGINT to itself.  
+
+Makefile-handout
+README-handout
+	The Makefile and README that are handed out to the students.

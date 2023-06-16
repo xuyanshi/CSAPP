@@ -1,0 +1,6 @@
+  File: ‘file1’
+  Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+  File: ‘file1’
+  Size: 6         	Blocks: 0          IO Block: 4096   regular file
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)

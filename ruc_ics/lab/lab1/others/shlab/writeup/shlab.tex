@@ -1,0 +1,466 @@
+\documentclass[11pt]{article}
+
+\usepackage{times}
+\usepackage{alltt}
+
+\input{decls-common}
+
+%% Page layout
+\oddsidemargin 0pt
+\evensidemargin 0pt
+\textheight 600pt
+\textwidth 469pt
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1ex}
+
+\begin{document}
+
+\title{CS 213, Fall 2002\\
+Lab Assignment L5: Writing Your Own Unix Shell\\
+Assigned: Oct.~24, Due: Thu., Oct.~31, 11:59PM
+}
+
+\author{}
+\date{}
+
+\maketitle
+
+Harry Bovik ({\tt bovik@cs.cmu.edu}) is the lead person for
+this assignment.
+
+\section*{Introduction}
+The purpose of this assignment is to become more familiar with the
+concepts of process control and signalling. You'll do this by writing a
+simple Unix shell program that supports job control.
+
+\section*{Logistics}
+
+You may work in a group of up to two people in solving the
+problems for this assignment.  The only ``hand-in'' will be
+electronic.  Any clarifications and revisions to the assignment will
+be posted on the course Web page.
+
+\section*{Hand Out Instructions}
+\begin{quote}
+\bf SITE-SPECIFIC: Insert a paragraph here that explains how the instructor
+will hand out the \texttt{shlab-handout.tar} file to the students.
+Here are the directions we use at CMU.
+\end{quote}
+
+Start by copying the file {\tt shlab-handout.tar}
+to the protected directory (the {\em lab directory}) in which you plan
+to do your work.  Then do the following:
+
+
+\begin{itemize}
+\item Type the command {\tt tar xvf shlab-handout.tar} 
+to expand the tarfile.
+
+\item Type the command {\tt make} to compile and link some
+test routines.
+
+\item Type your team member names and Andrew IDs in the header
+comment at the top of {\tt tsh.c}.
+
+\end{itemize}
+
+Looking at the {\tt tsh.c} ({\em tiny shell}) file, you will see that
+it contains a functional skeleton of a simple Unix shell. To help you
+get started, we have already implemented the less interesting
+functions.  Your assignment is to complete the remaining empty
+functions listed below.  As a sanity check for you, we've listed the approximate
+number of lines of code for each of these functions in our reference
+solution (which includes lots of comments).
+\begin{itemize}
+\item {\tt eval}: Main routine that parses and interprets the command
+line. [70 lines]
+\item {\tt builtin\_cmd}: Recognizes and interprets the built-in
+commands: {\tt quit}, {\tt fg}, {\tt bg}, and {\tt jobs}. [25 lines]
+\item {\tt do\_bgfg}: Implements the {\tt bg} and {\tt fg} built-in
+commands.  [50 lines]
+\item {\tt waitfg}: Waits for a foreground job to complete. [20 lines]
+\item {\tt sigchld\_handler}: Catches SIGCHILD signals. 80 lines]
+\item {\tt sigint\_handler}: Catches SIGINT ({\tt ctrl-c}) signals. [15 lines] 
+\item {\tt sigtstp\_handler}: Catches SIGTSTP ({\tt ctrl-z}) signals. [15 lines]
+\end{itemize}
+
+Each time you modify your {\tt tsh.c} file, type {\tt make} to
+recompile it. To run your shell, type {\tt tsh} to the 
+command line:
+\begin{tty}
+    unix> ./tsh
+    tsh>{\em [type commands to your shell here]}
+\end{tty}
+
+\section*{General Overview of Unix Shells}
+
+A {\em shell} is an interactive command-line interpreter that runs
+programs on behalf of the user. A shell repeatedly prints a prompt,
+waits for a {\em command line} on {\tt stdin}, and then carries out
+some action, as directed by the contents of the command line.
+
+The command line is a sequence of ASCII text words delimited by
+whitespace.  The first word in the command line is either the name of
+a built-in command or the pathname of an executable file. The
+remaining words are command-line arguments.  If the first word is a
+built-in command, the shell immediately executes the command in the
+current process.  Otherwise, the word is assumed to be the pathname of
+an executable program. In this case, the shell forks a child process,
+then loads and runs the program in the context of the child.  The
+child processes created as a result of interpreting a single command
+line are known collectively as a {\em job}. In general, a job can
+consist of multiple child processes connected by Unix pipes.
+
+If the command line ends with an ampersand ''{\tt \&}'', then the job
+runs in the {\em background}, which means that the shell does not wait
+for the job to terminate before printing the prompt and awaiting the
+next command line. Otherwise, the job runs in the {\em foreground},
+which means that the shell waits for the job to terminate before
+awaiting the next command line. Thus, at any point in time, at most
+one job can be running in the foreground. However, an arbitrary number
+of jobs can run in the background.
+
+For example, typing the command line 
+\begin{tty}
+    tsh>{\em jobs}
+\end{tty}
+causes the shell to execute the built-in {\tt jobs} command. 
+Typing the command line
+\begin{tty}
+    tsh>{\em /bin/ls -l -d}    	
+\end{tty}
+runs the {\tt ls} program in the foreground.  
+By convention, the shell ensures that when the program begins
+executing its main routine
+\begin{codefrag}
+    int main(int argc, char *argv[]) 
+\end{codefrag}
+the {\tt argc} and {\tt argv} arguments have the following values:
+\begin{itemize}
+\item {\tt argc == 3},
+\item {\tt argv[0] == ``/bin/ls''}, 
+\item {\tt argv[1]== ``-l''},
+\item {\tt argv[2]== ``-d''}. 
+\end{itemize}
+Alternatively, typing the command line
+\begin{tty}
+    tsh>{\em /bin/ls -l -d &}    	
+\end{tty}
+runs the {\tt ls} program in the background.
+
+Unix shells support the notion of {\em job control}, which allows
+users to move jobs back and forth between background and foreground,
+and to change the process state (running, stopped, or terminated) of
+the processes in a job.  Typing {\tt ctrl-c} causes a SIGINT signal to
+be delivered to each process in the foreground job.  The default
+action for SIGINT is to terminate the process.  Similarly, typing {\tt
+ctrl-z} causes a SIGTSTP signal to be delivered to each process in the
+foreground job. The default action for SIGTSTP is to place a process in
+the stopped state, where it remains until it is awakened by the receipt
+of a SIGCONT signal.  Unix shells also provide various built-in
+commands that support job control. For example:
+\begin{itemize}
+\item {\tt jobs}: List the running and stopped background jobs.
+\item {\tt bg <job>}: 
+Change a stopped background job to a running background job.
+\item {\tt fg <job>}: 
+Change a stopped or running background job to a running in the foreground.
+\item {\tt kill <job>}: Terminate a job.
+\end{itemize}
+
+\section*{The {\tt tsh} Specification}
+
+Your {\tt tsh} shell should have the following features:
+
+\begin{itemize}
+\item The prompt should be the string ``{\tt tsh> }''.
+
+\item The command line typed by the user should consist of a {\tt name} and
+zero or more arguments, all separated by one or more spaces.  If {\tt
+name} is a built-in command, then {\tt tsh} should handle it immediately and
+wait for the next command line. Otherwise, {\tt tsh} should assume that
+{\tt name} is the path of an executable file, which it loads and runs
+in the context of an initial child process (In this context, the term
+{\em job} refers to this initial child process).
+
+\item {\tt tsh} need not support pipes ({\tt |}) or
+I/O redirection ({\tt <} and {\tt >}). 
+
+\item Typing {\tt ctrl-c} ({\tt ctrl-z}) should cause a SIGINT (SIGTSTP)
+signal to be sent to the current foreground job, as well as any
+descendents of that job (e.g., any child processes that it forked).
+If there is no foreground job, then the signal should have no effect.
+
+\item 
+If the command line ends with an ampersand {\tt \&}, then {\tt tsh} should
+run the job in the background. Otherwise, it should run the job in the
+foreground. 
+
+\item Each job can be identified by either a process ID (PID) or a job
+ID (JID), which is a positive integer assigned by {\tt
+tsh}. JIDs should be denoted on the command line by the prefix
+'\verb:%:'. For example, ``{\tt \%5}'' denotes JID 5, and ``{\tt 5}''
+denotes PID 5. (We have provided you with all of the routines you need
+for manipulating the job list.)
+
+\item {\tt tsh} should support the following built-in commands:
+\begin{itemize}
+\item 
+The {\tt quit} command terminates the shell.
+
+\item 
+The {\tt jobs} command lists all background jobs. 
+
+\item 
+The {\tt bg <job>} command restarts {\tt <job>} by sending it a
+SIGCONT signal, and then runs it in the background. The {\tt <job>}
+argument can be either a PID or a JID. 
+
+\item 
+The {\tt fg <job>} command restarts {\tt <job>} by sending it
+a SIGCONT signal, and then runs it in the foreground. The {\tt <job>} 
+argument can be either a PID or a JID. 
+\end{itemize}
+
+\item {\tt tsh} should reap all of its zombie children.  If any job
+terminates because it receives a signal that it didn't catch, then
+{\tt tsh} should recognize this event and print a message with the
+job's PID and a description of the offending signal.
+
+\end{itemize}
+
+\section*{Checking Your Work}
+
+We have provided some tools to help you check your work.
+
+{\bf Reference solution.} The Linux executable {\tt tshref} is the
+reference solution for the shell. Run this program to resolve any
+questions you have about how your shell should behave. {\em Your shell
+should emit output that is identical to the reference solution} 
+(except for PIDs, of course, which change from run to run).
+
+{\bf Shell driver.} The {\tt sdriver.pl} program executes a shell as a
+child process, sends it commands and signals as directed by a {\em
+trace file}, and captures and displays the output from the shell.
+
+Use the -h argument to find out the usage of {\tt sdriver.pl}:
+\begin{tty}
+unix> ./sdriver.pl -h
+Usage: sdriver.pl [-hv] -t <trace> -s <shellprog> -a <args>
+Options:
+  -h            Print this message
+  -v            Be more verbose
+  -t <trace>    Trace file
+  -s <shell>    Shell program to test
+  -a <args>     Shell arguments
+  -g            Generate output for autograder
+\end{tty}
+
+We have also provided 16 trace files ({\tt
+trace\{01-16\}.txt}) that you will use in conjunction with the shell
+driver to test the correctness of your shell. The lower-numbered trace
+files do very simple tests, and the higher-numbered tests do more
+complicated tests.
+
+You can run the shell driver on your shell using trace file 
+{\tt trace01.txt} (for instance) by typing:
+\begin{tty}
+unix>{\em ./sdriver.pl -t trace01.txt -s ./tsh -a "-p"}
+\end{tty}
+(the {\tt -a "-p"} argument tells your shell not to emit a prompt), or
+\begin{tty}
+unix>{\em make test01}
+\end{tty}
+Similarly, to compare your result with the reference shell, you can run 
+the trace driver on the reference shell by
+typing:
+\begin{tty}
+unix>{\em ./sdriver.pl -t trace01.txt -s ./tshref -a "-p"}
+\end{tty}
+or
+\begin{tty}
+unix>{\em make rtest01}
+\end{tty}
+For your reference, {\tt tshref.out} gives the output of the reference
+solution on all races. This might be more convenient for you than
+manually running the shell driver on all trace files.
+
+The neat thing about the trace files is that they generate the same
+output you would have gotten had you run your shell interactively
+(except for an initial comment that identifies the trace).  For
+example:
+
+\begin{tty}
+bass> make test15
+./sdriver.pl -t trace15.txt -s ./tsh -a "-p"
+#
+# trace15.txt - Putting it all together
+#
+tsh> ./bogus
+./bogus: Command not found.
+tsh> ./myspin 10
+Job (9721) terminated by signal 2
+tsh> ./myspin 3 &
+[1] (9723) ./myspin 3 &
+tsh> ./myspin 4 &
+[2] (9725) ./myspin 4 &
+tsh> jobs
+[1] (9723) Running    ./myspin 3 &
+[2] (9725) Running    ./myspin 4 &
+tsh> fg %1
+Job [1] (9723) stopped by signal 20
+tsh> jobs
+[1] (9723) Stopped    ./myspin 3 &
+[2] (9725) Running    ./myspin 4 &
+tsh> bg %3
+%3: No such job
+tsh> bg %1
+[1] (9723) ./myspin 3 &
+tsh> jobs
+[1] (9723) Running    ./myspin 3 &
+[2] (9725) Running    ./myspin 4 &
+tsh> fg %1
+tsh> quit
+bass> 
+\end{tty}
+
+
+\section*{Hints}
+
+\begin{itemize}
+\item Read every word of Chapter 8 (Exceptional Control Flow)
+in your textbook.
+
+\item Use the trace files to guide the development of your
+shell. Starting with {\tt trace01.txt}, make sure that your shell
+produces the {\em identical} output as the reference shell. Then move
+on to trace file {\tt trace02.txt}, and so on.
+
+\item The {\tt waitpid}, {\tt kill}, {\tt
+fork}, {\tt execve}, {\tt setpgid}, and {\tt sigprocmask} functions
+will come in very handy. The WUNTRACED and WNOHANG options to {\tt
+waitpid} will also be useful.
+
+\item When you implement your signal handlers, be sure to send
+{\tt SIGINT} and {\tt SIGTSTP} signals to the entire foreground
+process group, using ''{\tt -pid}'' instead of ''{\tt pid}'' in the
+argument to the {\tt kill} function. The {\tt sdriver.pl} program tests
+for this error.
+
+\item One of the tricky parts of the assignment is deciding on the allocation
+of work between the {\tt waitfg} and {\tt sigchld\_handler} functions.
+We recommend the following approach:
+\begin{itemize}
+\item In {\tt waitfg}, use a busy loop around the {\tt sleep} function.  
+
+\item In {\tt sigchld\_handler}, use exactly one call to {\tt waitpid}.  
+\end{itemize}
+
+While other solutions are possible, such as calling {\tt waitpid} in
+both {\tt waitfg} and {\tt sigchld\_handler}, these can be very
+confusing. It is simpler to do all reaping in the handler.
+
+\item In {\tt eval}, the parent must use {\tt sigprocmask} to 
+block {\tt SIGCHLD} signals before it forks the child, and then
+unblock these signals, again using {\tt sigprocmask} after it adds the
+child to the job list by calling {\tt addjob}. Since children inherit
+the {\tt blocked} vectors of their parents, the child must be sure to
+then unblock {\tt SIGCHLD} signals before it execs the new program.
+
+The parent needs to block the {\tt SIGCHLD} signals in this way in
+order to avoid the race condition where the child is reaped by {\tt
+sigchld\_handler} (and thus removed from the job list) {\em before} the
+parent calls {\tt addjob}.
+ 
+\item Programs such as {\tt more}, {\tt less}, {\tt vi}, and {\tt emacs}
+do strange things with the terminal settings. Don't run these programs
+from your shell. Stick with simple text-based programs such as {\tt
+/bin/ls}, {\tt /bin/ps}, and {\tt /bin/echo}.
+
+\item When you run your shell from the standard Unix shell, your shell
+is running in the foreground process group. If your shell then creates
+a child process, by default that child will also be a member of the
+foreground process group. Since typing {\tt ctrl-c} sends a SIGINT to every
+process in the foreground group, typing {\tt ctrl-c} will send a SIGINT to
+your shell, as well as to every process that your shell created, which
+obviously isn't correct.
+
+Here is the workaround: After the {\tt fork}, but before the {\tt
+execve}, the child process should call {\tt setpgid(0, 0)}, which puts
+the child in a new process group whose group ID is identical to the
+child's PID. This ensures that there will be only one process, your
+shell, in the foreground process group. When you type {\tt ctrl-c}, the
+shell should catch the resulting SIGINT and then forward it to the
+appropriate foreground job (or more precisely, the process group that
+contains the foreground job).
+\end{itemize}
+
+\section*{Evaluation}
+
+Your score will be computed out of a maximum of 90 points based on the
+following distribution:
+\begin{description}
+\item[80] Correctness: 16 trace files at 5 points each.
+\item[10] Style points. We expect you to have good comments (5 pts)
+and to check the return value of EVERY system call (5 pts).
+\end{description}
+
+Your solution shell will be tested for correctness on a Linux machine,
+using the same shell driver and trace files that were included in your
+lab directory. Your shell should produce {\bf identical} output on
+these traces as the reference shell, with only two exceptions:
+\begin{itemize}
+\item The PIDs can (and will) be different.
+\item The output of the {\tt /bin/ps} commands in {\tt trace11.txt},
+{\tt trace12.txt}, and {\tt trace13.txt} will be different from run to
+run.  However, the running states of any {\tt mysplit} processes in
+the output of the {\tt /bin/ps} command should be identical.
+\end{itemize}
+
+\section*{Hand In Instructions}
+
+\begin{quote}
+\bf SITE-SPECIFIC: Insert a paragraph here that explains how the students
+should hand in their \texttt{tsh.c} files.
+Here are the directions we use at CMU.
+\end{quote}
+
+\begin{itemize}
+\item Make sure you have included your names and Andrew IDs in the
+header comment of {\tt tsh.c}.
+
+\item Create a team name of the form:
+\begin{itemize}
+\item ``${\it ID}$'' where ${\it ID}$ is your Andrew ID, if you are
+working alone, or
+\item ``${\it ID}_1${\tt +}${\it ID}_2$'' where ${\it ID}_1$ is the
+Andrew ID of the first team member and ${\it ID}_2$ is the Andrew ID
+of the second team member.  
+\end{itemize}
+We need you to create your team names in this way so that we can
+autograde your assignments.
+
+\item To hand in your {\tt tsh.c} file, type:
+\begin{tty}
+make handin TEAM=teamname
+\end{tty}
+where \verb|teamname| is the team name described above.
+
+\item After the handin, if you discover a mistake and want to
+submit a revised copy, type
+\begin{tty}
+make handin TEAM=teamname VERSION=2
+\end{tty}
+Keep incrementing the version number with each submission.
+
+\item You should verify your handin by looking in 
+\begin{tty}
+/afs/cs.cmu.edu/academic/class/15213-f01/L5/handin
+\end{tty}
+You have list and insert permissions in this directory, but no
+read or write permissions.
+\end{itemize}
+Good luck! 
+
+
+\end{document}
